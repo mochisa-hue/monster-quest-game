@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Monster Hunter RPG</title>
+<style>
+body{
+ margin:0;
+ background:#111;
+ color:white;
+ font-family:Arial;
+ text-align:center;
+}
+canvas{
+ background:#222;
+ border:3px solid white;
+ margin-top:10px;
+}
+button{
+ padding:10px;
+ margin:5px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>⚔️ Monster Hunter RPG ⚔️</h1>
+
+<p>
+Move: WASD | Attack: SPACE | Visit Blacksmith: B
+</p>
+
+<canvas id="game" width="900" height="500"></canvas>
+
+<p id="info"></p>
+
+<button onclick="upgrade()">🔨 Upgrade Weapon</button>
+<button onclick="sell()">💰 Sell Weapon</button>
+
+<script>
+
+const c=document.getElementById("game");
+const ctx=c.getContext("2d");
+
+let player={
+ x:450,y:250,
+ hp:100,
+ damage:10,
+ gold:20,
+ weapon:1
+};
+
+let biomes=[
+ {name:"Forest",color:"#145214",enemy:"Slime"},
+ {name:"Desert",color:"#b8860b",enemy:"Scorpion"},
+ {name:"Volcano",color:"#8b0000",enemy:"Demon"}
+];
+
+let biome=0;
+
+let enemies=[];
+let boss=null;
+
+function spawn(){
+ enemies=[];
+ for(let i=0;i<5;i++){
+  enemies.push({
+   x:Math.random()*850,
+   y:Math.random()*450,
+   hp:30+biome*20,
+   name:biomes[biome].enemy
+  });
+ }
+}
+
+spawn();
+
+let keys={};
+
+document.onkeydown=e=>{
+ keys[e.key.toLowerCase()]=true;
+
+ if(e.code==="Space")
+ attack();
+
+ if(e.key.toLowerCase()=="b")
+ alert("Blacksmith opened!");
+}
+
+document.onkeyup=e=>{
+ keys[e.key.toLowerCase()]=false;
+}
+
+
+function attack(){
+
+ enemies.forEach(e=>{
+  let d=Math.hypot(player.x-e.x,player.y-e.y);
+
+  if(d<70){
+   e.hp-=player.damage;
+
+   if(e.hp<=0){
+    player.gold+=10;
+    e.x=Math.random()*850;
+    e.y=Math.random()*450;
+    e.hp=30+biome*20;
+   }
+  }
+ });
+
+ if(boss){
+  let d=Math.hypot(player.x-boss.x,player.y-boss.y);
+  if(d<100){
+   boss.hp-=player.damage;
+  }
+ }
+
+}
+
+
+function upgrade(){
+
+ if(player.gold>=50){
+  player.gold-=50;
+  player.damage+=5;
+  player.weapon++;
+
+  alert("Weapon upgraded!");
+ }
+ else alert("Need 50 gold");
+}
+
+
+function sell(){
+
+ player.gold+=25;
+ player.damage=Math.max(5,player.damage-3);
+
+ alert("Weapon sold!");
+}
+
+
+
+function update(){
+
+ if(keys.w)player.y-=3;
+ if(keys.s)player.y+=3;
+ if(keys.a)player.x-=3;
+ if(keys.d)player.x+=3;
+
+
+ if(player.gold>=150 && biome==2 && !boss){
+
+  boss={
+   x:450,
+   y:80,
+   hp:300
+  };
+
+ }
+
+ if(boss && boss.hp<=0){
+
+  alert("YOU DEFEATED THE FINAL BOSS!");
+
+  boss=null;
+  player.gold+=200;
+
+ }
+
+
+ if(enemies.length==0){
+
+  biome++;
+
+  if(biome>=biomes.length){
+   biome=2;
+  }
+
+  spawn();
+ }
+
+
+}
+
+
+
+function draw(){
+
+ ctx.fillStyle=biomes[biome].color;
+ ctx.fillRect(0,0,c.width,c.height);
+
+
+ // player
+ ctx.fillStyle="cyan";
+ ctx.fillRect(player.x,player.y,30,30);
+
+
+ // enemies
+ enemies.forEach(e=>{
+
+ ctx.fillStyle="lime";
+ ctx.fillRect(e.x,e.y,25,25);
+
+ ctx.fillStyle="white";
+ ctx.fillText(e.name+" HP:"+e.hp,e.x,e.y-5);
+
+ });
+
+
+ // boss
+
+ if(boss){
+
+ ctx.fillStyle="purple";
+ ctx.fillRect(boss.x,boss.y,80,80);
+
+ ctx.fillStyle="white";
+ ctx.fillText(
+ "FINAL BOSS HP:"+boss.hp,
+ boss.x-20,
+ boss.y-10
+ );
+
+ }
+
+
+
+document.getElementById("info").innerHTML=
+"Biome: "+biomes[biome].name+
+" | Weapon Lv:"+player.weapon+
+" | Damage:"+player.damage+
+" | Gold:"+player.gold+
+" | HP:"+player.hp;
+
+
+}
+
+
+
+function loop(){
+
+ update();
+ draw();
+
+ requestAnimationFrame(loop);
+
+}
+
+
+loop();
+
+</script>
+
+</body>
+</html>
